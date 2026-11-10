@@ -1,0 +1,208 @@
+{
+  "name": "AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4655301b-c0ba-4fdb-9911-e9ab54b8e970",
+      "name": "When chat message received"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=Today's date is {{$json.currentDate}}.\n\nAlways use this as today's date.\n\nNever assume today's date from your own knowledge.\n\nWhenever the user asks for a period (today, yesterday, last 7 days, this month, etc.), calculate the dates relative to {{$json.currentDate}}.\n\nAlways use the Get Call Stats tool."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        368,
+        0
+      ],
+      "id": "ef6602b9-3662-48e2-b9c3-e6f7b742d9c3",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        368,
+        208
+      ],
+      "id": "c1dd203b-f8a2-46c9-9592-f7553e757dcf",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "description": "Returns call statistics for a specified date range.\n\nInputs:\n- startDate (YYYY-MM-DD)\n- endDate (YYYY-MM-DD)\n\nReturns:\n- totalCalls\n- negativeCalls\n- negativeCallPercent",
+        "workflowId": {
+          "__rl": true,
+          "value": "YOUR_ID",
+          "mode": "list",
+          "cachedResultName": "Get Call Stats"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "startDate": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('startDate', ``, 'string') }}",
+            "endDate": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('endDate', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "startDate",
+              "displayName": "startDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "endDate",
+              "displayName": "endDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        208
+      ],
+      "id": "da041335-c672-4a8a-861a-4bc4a7793a89",
+      "name": "Call 'Get Call Stats'"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a0b6b3cd-d8f4-4ec0-8269-72a5f943b258",
+              "name": "chatInput",
+              "value": "={{$json.chatInput}}",
+              "type": "string"
+            },
+            {
+              "id": "6e8af901-ecf1-4264-9660-16d34ab84ee7",
+              "name": "currentDate",
+              "value": "={{$now.toISODate()}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        176,
+        0
+      ],
+      "id": "e6fb07d1-b85e-401e-b853-9c393ae96fac",
+      "name": "data"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        208
+      ],
+      "id": "bebd5ed5-7540-4824-836b-3227c8713092",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Get Call Stats'": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "nodeGroups": []
+}

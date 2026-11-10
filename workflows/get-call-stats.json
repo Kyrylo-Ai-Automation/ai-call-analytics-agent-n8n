@@ -1,0 +1,91 @@
+{
+  "name": "Get Call Stats",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "startDate"
+            },
+            {
+              "name": "endDate"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "378aa008-7dec-4de9-a143-276b8920af50",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "YOUR_ID",
+          "mode": "list",
+          "cachedResultName": "Call stats"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "e63314e8-cab0-4026-8d32-3bfce0dc49de",
+      "name": "Get row(s)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('When Executed by Another Workflow').first().json;\n\nconst rows = $input.all();\n\nlet filtered = rows;\n\nif (input.startDate && input.endDate) {\n  const startDate = new Date(input.startDate);\n  const endDate = new Date(input.endDate);\n  endDate.setHours(23, 59, 59, 999);\n\n  filtered = rows.filter(item => {\n    const created = new Date(item.json.createdAt);\n    return created >= startDate && created <= endDate;\n  });\n}\n\nconst totalCalls = filtered.length;\n\nconst negativeCalls = filtered.filter(\n  item => item.json.tone === \"negative\"\n).length;\n\nconst negativeCallPercent =\n  totalCalls === 0\n    ? 0\n    : Math.round((negativeCalls / totalCalls) * 100);\n\nreturn [{\n  json: {\n    totalCalls,\n    negativeCalls,\n    negativeCallPercent\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "03bee66c-4a95-4646-8d86-3293365adac3",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "nodeGroups": []
+}
